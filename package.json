@@ -1,0 +1,27 @@
+{
+	"name": "lw-admin-hub",
+	"version": "1.0.0",
+	"private": true,
+	"description": "LW Plugins hub page (React, WordPress components).",
+	"license": "GPL-2.0-or-later",
+	"scripts": {
+		"build": "wp-scripts build src/index.js",
+		"start": "wp-scripts start src/index.js",
+		"lint:js": "wp-scripts lint-js src",
+		"i18n": "wp i18n make-pot . languages/lw-admin-hub.pot --slug=lw-admin-hub --domain=lw-admin-hub --include=php,build --headers='{\"Project-Id-Version\":\"LW Admin Hub\",\"Last-Translator\":\"LW Plugins <info@lwplugins.com>\",\"Report-Msgid-Bugs-To\":\"https://github.com/lwplugins/admin-hub/issues\",\"Language-Team\":\"LW Plugins <info@lwplugins.com>\"}' && msgmerge --quiet --update --backup=none --no-fuzzy-matching languages/lw-admin-hub-hu_HU.po languages/lw-admin-hub.pot"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^36.0.0"
+	},
+	"dependencies": {
+		"@wordpress/api-fetch": "^7.56.0",
+		"@wordpress/components": "^41.0.0",
+		"@wordpress/data": "^10.56.0",
+		"@wordpress/element": "^8.8.0",
+		"@wordpress/i18n": "^6.29.0",
+		"@wordpress/icons": "^17.0.0",
+		"@wordpress/notices": "^5.56.0",
+		"@wordpress/primitives": "^4.56.0",
+		"@wordpress/ui": "^0.23.0"
+	}
+}

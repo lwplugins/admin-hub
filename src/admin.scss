@@ -1,0 +1,628 @@
+// LW Plugins hub styles. Every class is lw-hub-* so nothing collides with a
+// host plugin's own admin styles. Colors, spacing and radii come from the
+// core WPDS tokens (wp-theme, a dependency of wp-components); the fallbacks
+// only matter on WordPress versions without them.
+
+$surface: var(--wpds-color-background-surface-neutral-strong, #fff);
+$canvas: var(--wpds-color-background-surface-neutral-weak, #f6f7f7);
+$stroke: var(--wpds-color-stroke-surface-neutral, #ddd);
+$stroke-weak: var(--wpds-color-stroke-surface-neutral-weak, #f0f0f0);
+$text: var(--wpds-color-foreground-content-neutral, #1e1e1e);
+$muted: var(--wpds-color-foreground-content-neutral-weak, #707070);
+$success: var(--wpds-color-foreground-content-success, #007f30);
+$success-bg: var(--wpds-color-background-surface-success-weak, #eff9f1);
+$warning: var(--wpds-color-foreground-content-warning, #926300);
+$warning-bg: var(--wpds-color-background-surface-warning-weak, #fef8ee);
+$idle-bg: var(--wpds-color-background-track-neutral-weak, #f0f0f0);
+$radius: var(--wpds-border-radius-md, 4px);
+$radius-lg: var(--wpds-border-radius-lg, 8px);
+$gap-sm: var(--wpds-dimension-gap-sm, 8px);
+$gap-md: var(--wpds-dimension-gap-md, 12px);
+$gap-lg: var(--wpds-dimension-gap-lg, 16px);
+$gap-xl: var(--wpds-dimension-gap-xl, 24px);
+$mono: ui-monospace, sfmono-regular, menlo, consolas, monospace;
+
+$bar-height: 64px;
+$foot-height: 56px;
+
+// LW blue (lwplugins.com): admin theme color of the hub, so buttons, focus
+// rings and the search field follow it. White on #0b62bf = 6.0:1 (AA).
+$lw-brand: #0b62bf;
+
+body.lw-hub-screen {
+	--wp-admin-theme-color: #{$lw-brand};
+	--wp-admin-theme-color--rgb: 11, 98, 191;
+	--wp-admin-theme-color-darker-10: #0a56a8;
+	--wp-admin-theme-color-darker-10--rgb: 10, 86, 168;
+	--wp-admin-theme-color-darker-20: #084a91;
+	--wp-admin-theme-color-darker-20--rgb: 8, 74, 145;
+	--wpds-color-stroke-focus: #{$lw-brand};
+
+	// Focus rings only for keyboard users (:focus-visible), as in every LW
+	// React admin; clicking no longer leaves a ring behind.
+	:is(button, a, [role="button"], [tabindex], input):focus:not(:focus-visible) {
+		outline: none;
+		box-shadow: none;
+	}
+
+	.components-button.is-secondary:focus:not(:focus-visible) {
+		box-shadow: inset 0 0 0 1px var(--wp-admin-theme-color);
+	}
+
+	// Full-bleed app screen inside the classic admin frame.
+	#wpcontent {
+		padding-left: 0;
+	}
+
+	#wpbody-content {
+		padding-bottom: 0;
+	}
+
+	#wpfooter {
+		display: none;
+	}
+}
+
+.lw-hub-root {
+	min-height: calc(100vh - var(--wp-admin--admin-bar--height, 32px));
+	background: $canvas;
+	color: $text;
+}
+
+.lw-hub-shell {
+	display: flex;
+	flex-direction: column;
+	min-height: calc(100vh - var(--wp-admin--admin-bar--height, 32px));
+}
+
+// Top bar -------------------------------------------------------------------
+
+.lw-hub-topbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: $gap-sm $gap-lg;
+	min-height: $bar-height;
+	padding: 0 32px;
+	background: $surface;
+	border-bottom: 1px solid $stroke-weak;
+	box-sizing: border-box;
+
+	&__title {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin: 0;
+		padding: 0;
+		font-size: 18px;
+		font-weight: 600;
+		line-height: 1.3;
+	}
+}
+
+.lw-hub-mark {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	background: $lw-brand;
+
+	svg {
+		fill: #fff;
+	}
+}
+
+.lw-hub-summary {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $gap-lg;
+	margin: 0;
+	color: $muted;
+	font-size: 13px;
+
+	b {
+		color: $text;
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+// Content -------------------------------------------------------------------
+
+.lw-hub-content {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: $gap-lg;
+	width: 100%;
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: $gap-xl 32px 48px;
+	box-sizing: border-box;
+}
+
+.lw-hub-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $gap-md;
+}
+
+.lw-hub-search {
+	width: 280px;
+	max-width: 100%;
+}
+
+.lw-hub-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.lw-hub-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 32px;
+	padding: 0 12px;
+	border: 1px solid $stroke;
+	border-radius: 999px;
+	background: $surface;
+	color: $text;
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+
+	&:hover {
+		border-color: $muted;
+	}
+
+	&:focus-visible {
+		outline: 2px solid $lw-brand;
+		outline-offset: 2px;
+	}
+
+	&[aria-pressed="true"] {
+		border-color: $lw-brand;
+		background: color-mix(in srgb, #{$lw-brand} 8%, #fff);
+		color: $lw-brand;
+		font-weight: 600;
+	}
+
+	&__count {
+		color: $muted;
+		font-variant-numeric: tabular-nums;
+
+		[aria-pressed="true"] > & {
+			color: inherit;
+		}
+	}
+}
+
+// Table ---------------------------------------------------------------------
+
+.lw-hub-tablewrap {
+	display: block;
+	overflow-x: auto;
+	border: 1px solid $stroke-weak;
+	border-radius: $radius-lg;
+	background: $surface;
+}
+
+.lw-hub-table {
+	width: 100%;
+	min-width: 640px;
+	border-collapse: collapse;
+
+	th {
+		padding: 10px $gap-lg;
+		border-bottom: 1px solid $stroke;
+		color: $muted;
+		font-size: 12px;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-align: left;
+		text-transform: uppercase;
+	}
+
+	td {
+		padding: $gap-md $gap-lg;
+		border-bottom: 1px solid $stroke-weak;
+		vertical-align: middle;
+	}
+
+	tbody tr:last-child td {
+		border-bottom: 0;
+	}
+
+	&__status,
+	&__version {
+		white-space: nowrap;
+	}
+
+	&__version {
+		color: $muted;
+		font-family: $mono;
+		font-size: 12px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	&__action {
+		text-align: right;
+		white-space: nowrap;
+	}
+
+	&__empty td {
+		padding: $gap-xl $gap-lg;
+		color: $muted;
+		text-align: center;
+
+		p {
+			margin: 0 0 $gap-sm;
+		}
+	}
+}
+
+.lw-hub-name {
+	display: flex;
+	align-items: center;
+	gap: $gap-md;
+
+	strong {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: $gap-sm;
+		font-size: 14px;
+	}
+
+	small {
+		display: block;
+		margin-top: 2px;
+		color: $muted;
+		font-size: 12.5px;
+		line-height: 1.45;
+	}
+}
+
+.lw-hub-icon {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border: 1px solid $stroke-weak;
+	border-radius: $radius-lg;
+	background: $surface;
+	color: $muted;
+
+	img {
+		display: block;
+		width: 22px;
+		height: 22px;
+	}
+
+	svg {
+		fill: currentColor;
+	}
+}
+
+.lw-hub-beta {
+	padding: 1px 6px;
+	border-radius: $radius;
+	background: $idle-bg;
+	color: $muted;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+}
+
+.lw-hub-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 2px 9px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 500;
+	white-space: nowrap;
+
+	&::before {
+		content: "";
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: currentColor;
+	}
+
+	&.is-active {
+		background: $success-bg;
+		color: $success;
+	}
+
+	&.is-inactive {
+		background: $warning-bg;
+		color: $warning;
+	}
+
+	&.is-missing {
+		background: $idle-bg;
+		color: $muted;
+	}
+}
+
+.lw-hub-github {
+	gap: 4px;
+
+	svg {
+		fill: currentColor;
+	}
+}
+
+// Footer --------------------------------------------------------------------
+
+.lw-hub-footer {
+	display: flex;
+	flex-shrink: 0;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: $gap-sm $gap-lg;
+	min-height: $foot-height;
+	padding: 0 32px;
+	border-top: 1px solid $stroke-weak;
+	background: $surface;
+	box-sizing: border-box;
+
+	a {
+		border-radius: 2px;
+		text-decoration: none;
+
+		&:focus {
+			box-shadow: none;
+		}
+
+		&:focus-visible {
+			outline: 2px solid $lw-brand;
+			outline-offset: 4px;
+		}
+	}
+
+	&__link {
+		color: $muted;
+		font-size: 13px;
+
+		&:hover {
+			color: $text;
+		}
+	}
+
+	&__brand {
+		display: inline-flex;
+		transition: opacity 0.15s;
+
+		&:hover {
+			opacity: 0.8;
+		}
+	}
+}
+
+// LW Plugins wordmark (lwplugins.com light theme colors, no rounded corners).
+.lw-wordmark {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+
+	&__mark {
+		display: flex;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		background: $lw-brand;
+
+		svg {
+			fill: #fff;
+		}
+	}
+
+	&__text {
+		color: #16181c;
+		font-family: $mono;
+		font-size: 13px;
+		font-weight: 800;
+		letter-spacing: 0.02em;
+
+		span {
+			color: #767d86;
+		}
+	}
+}
+
+// Snackbars -----------------------------------------------------------------
+
+.lw-hub-snackbars {
+	position: fixed;
+	right: 24px;
+	bottom: 24px;
+	z-index: 100000;
+	width: auto;
+	max-width: min(480px, calc(100vw - 48px));
+}
+
+// Skeletons -----------------------------------------------------------------
+// Shapes come from the WPDS <Skeleton>; these rules only size and lay them out.
+
+.lw-skel {
+	display: block;
+	border-radius: $radius;
+
+	&.is-round {
+		border-radius: 999px;
+	}
+
+	&--text {
+		max-width: 100%;
+		height: 12px;
+
+		&.is-sm {
+			height: 10px;
+		}
+
+		&.is-lg {
+			height: 16px;
+		}
+	}
+}
+
+.lw-skel-lines {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-sm;
+	width: 100%;
+}
+
+.lw-hub-skeleton {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+
+	&__table {
+		overflow: hidden;
+	}
+
+	&__row {
+		display: grid;
+		grid-template-columns: 36px minmax(0, 1fr) 90px 70px 100px;
+		align-items: center;
+		gap: $gap-md;
+		padding: $gap-md $gap-lg;
+		border-bottom: 1px solid $stroke-weak;
+
+		&:last-child {
+			border-bottom: 0;
+		}
+	}
+
+	&__text {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+}
+
+// Mobile ----------------------------------------------------------------------
+
+@media (max-width: 782px) {
+	.lw-hub-root,
+	.lw-hub-shell {
+		min-height: calc(100vh - var(--wp-admin--admin-bar--height, 46px));
+	}
+
+	.lw-hub-topbar,
+	.lw-hub-footer {
+		padding: $gap-sm $gap-lg;
+	}
+
+	.lw-hub-topbar__title {
+		font-size: 16px;
+	}
+
+	.lw-hub-content {
+		padding: $gap-lg;
+	}
+
+	.lw-hub-search {
+		width: 100%;
+	}
+}
+
+// Phones: every row becomes a card (name on top, status + version + action
+// below), so nothing has to scroll sideways.
+@media (max-width: 600px) {
+	.lw-hub-table {
+		min-width: 0;
+
+		thead {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+		}
+
+		tbody,
+		tr,
+		td {
+			display: block;
+		}
+
+		tbody tr {
+			display: grid;
+			grid-template-areas:
+				"plugin plugin plugin"
+				"status version action";
+			grid-template-columns: auto 1fr auto;
+			align-items: center;
+			gap: $gap-sm $gap-md;
+			padding: 14px $gap-lg;
+			border-bottom: 1px solid $stroke-weak;
+
+			&:last-child {
+				border-bottom: 0;
+			}
+		}
+
+		td {
+			padding: 0;
+			border: 0;
+		}
+
+		&__plugin {
+			grid-area: plugin;
+		}
+
+		&__status {
+			grid-area: status;
+		}
+
+		&__version {
+			grid-area: version;
+		}
+
+		&__action {
+			grid-area: action;
+		}
+
+		tbody tr.lw-hub-table__empty {
+			display: block;
+
+			td {
+				padding: $gap-lg 0;
+			}
+		}
+	}
+
+	.lw-hub-skeleton__row {
+		grid-template-columns: 36px minmax(0, 1fr) 80px;
+
+		> :nth-child(4),
+		> :nth-child(5) {
+			display: none;
+		}
+	}
+
+	.lw-hub-snackbars {
+		right: $gap-lg;
+		bottom: $gap-lg;
+		left: $gap-lg;
+		max-width: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.lw-hub-footer__brand {
+		transition: none;
+	}
+}

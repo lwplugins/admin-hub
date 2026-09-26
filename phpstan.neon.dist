@@ -1,0 +1,16 @@
+includes:
+	- vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+	level: 5
+
+	# Host plugins support PHP 8.0 upwards: analyse with 8.0 grammar so 8.1+
+	# syntax and stdlib calls fail here, before they reach any plugin.
+	phpVersion:
+		min: 80000
+		max: 80599
+
+	paths:
+		- php/
+		- bin/
+		- tools/

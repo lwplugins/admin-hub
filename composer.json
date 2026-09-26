@@ -1,0 +1,46 @@
+{
+    "name": "lwplugins/admin-hub",
+    "description": "Shared \"LW Plugins\" overview page, bundled into every LW plugin by bin/sync.php.",
+    "type": "library",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "LW Plugins",
+            "homepage": "https://lwplugins.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.0"
+    },
+    "require-dev": {
+        "brain/monkey": "^2.6",
+        "phpunit/phpunit": "^10.0",
+        "squizlabs/php_codesniffer": "^3.0",
+        "szepeviktor/phpstan-wordpress": "^2.0",
+        "wp-coding-standards/wpcs": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "LightweightPlugins\\AdminHub\\": "php/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "LightweightPlugins\\AdminHub\\Tests\\": "tests/",
+            "LightweightPlugins\\AdminHub\\Tools\\": "tools/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "phpcs": "phpcs",
+        "phpcbf": "phpcbf",
+        "analyse": "phpstan analyse --memory-limit=2G",
+        "test": "phpunit",
+        "sync": "php bin/sync.php"
+    }
+}

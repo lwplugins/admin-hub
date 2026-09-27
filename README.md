@@ -112,12 +112,25 @@ What it does (idempotent; a second run prints `no changes`):
   `index.css`, `index-rtl.css`, `index.asset.json` (the manifest as JSON so the
   plugin's phpcs has no generated PHP to scan) and `icons/`. Not `build/`:
   wp-scripts empties `build/` on every build of the plugin's own admin.
-- **Translations** → `languages/`: hub entries merged into
-  `{domain}.pot` and `{domain}-{locale}.po` (the plugin's own translation
-  wins on a shared msgid; references point at the plugin paths), `.mo`
-  compiled, and `{domain}-{locale}-{md5}.json` written, where md5 is of
-  `assets/hub/index.js` as WordPress looks it up. Needs `msgcat`, `msgfmt`
-  and `wp`. The plugin's own `npm run i18n` keeps working afterwards.
+- **Translations** → `languages/` (needs `msgfmt` and `wp`). The plugin's own
+  wording of a hub string always wins, and the plugin files keep their format:
+  - `{domain}-{locale}.po`: hub entries the plugin lacks are added (references
+    pointing at the plugin paths), an empty plugin `msgstr` gets the hub
+    translation. Nothing else in the file is touched (header, wrapping,
+    references, flags); no `msgcat` re-render.
+  - `.mo` compiled from that `.po`.
+  - `{domain}-{locale}-{md5}.json` (md5 of `assets/hub/index.js`, as WordPress
+    looks it up) made with `wp i18n make-json` from the **merged** `.po`,
+    restricted to the hub script's strings. So a plugin that says
+    "Próbáld újra" where the hub says "Újrapróbálás" keeps its wording in the
+    browser too.
+  - `{domain}.pot`: when the plugin has its own i18n script (a `package.json`
+    or `composer.json` script named `i18n` or running `wp i18n make-pot`),
+    the `.pot` is left to it. Its make-pot scans `assets/hub/` and the synced
+    PHP, so it picks the hub strings up; the sync only prints
+    ``run `npm run i18n` `` while hub strings are missing (and warns if the
+    script excludes `assets/`). Without such a script, only the missing hub
+    entries are appended.
 - `--shim` replaces `Admin/ParentPage.php` with a thin class: `SLUG`,
   `maybe_register()` (NoticeManager init + `Hub::ensure_menu()`),
   `get_plugins_registry()`.

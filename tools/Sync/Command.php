@@ -26,7 +26,9 @@ Usage: php bin/sync.php <plugin-dir> [options]
 Copies the LW Plugins hub into a host plugin:
   PHP     -> {psr4-dir}/Admin/Hub/  (namespace {PluginNS}\Admin\Hub, text domain rewritten)
   assets  -> assets/hub/            (index.js/.css, index.asset.json, icons/)
-  i18n    -> languages/             (.pot/.po merged, .mo, JS JSON by md5 of assets/hub/index.js)
+  i18n    -> languages/             (.po merged plugin-first, .mo, JS JSON by md5 of assets/hub/index.js
+                                     from the merged .po; the .pot is left to the plugin's i18n script,
+                                     without one only the missing hub entries are added)
 
 Options:
   --namespace=NS      Plugin root namespace (default: composer.json PSR-4)

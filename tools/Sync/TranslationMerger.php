@@ -13,11 +13,15 @@ use RuntimeException;
 
 /**
  * For every hub .po: domain and source references rewritten to the host
- * layout, merged into languages/{domain}-{locale}.po (the plugin's own
- * translation wins on a shared msgid), compiled to .mo, and the JS
- * translations written as {domain}-{locale}-{md5}.json, where md5 is of the
- * plugin-relative script path (assets/hub/index.js), as WordPress looks it up.
- * The plugin's .pot gets the hub strings too. Needs msgcat, msgfmt and wp.
+ * layout, then merged plugin-first and format-preserving (PoMerger) into
+ * languages/{domain}-{locale}.po, compiled to .mo, and the hub script's JS
+ * translations written as {domain}-{locale}-{md5}.json from that merged .po,
+ * so the plugin's own wording of a hub string wins in the browser too. md5 is
+ * of the plugin-relative script path (assets/hub/index.js), as WordPress
+ * looks it up.
+ *
+ * The .pot is left to the plugin's own i18n flow when it has one (I18nFlow);
+ * otherwise only the missing hub entries are added. Needs msgfmt and wp.
  */
 final class TranslationMerger {
 
@@ -60,7 +64,7 @@ final class TranslationMerger {
 		$this->hub    = $hub;
 		$this->target = $target;
 		$this->writer = $writer;
-		$this->tmp    = sys_get_temp_dir() . '/lw-admin-hub-sync-' . getmypid() . '/';
+		$this->tmp    = sys_get_temp_dir() . '/lw-admin-hub-sync-' . getmypid() . '-' . bin2hex( random_bytes( 4 ) ) . '/';
 	}
 
 	/**
@@ -70,24 +74,25 @@ final class TranslationMerger {
 	 * @throws RuntimeException When a tool is missing or a step fails.
 	 */
 	public function merge(): void {
-		foreach ( array( 'msgcat', 'msgfmt', 'wp' ) as $tool ) {
+		foreach ( array( 'msgfmt', 'wp' ) as $tool ) {
 			if ( '' === trim( (string) shell_exec( 'command -v ' . escapeshellarg( $tool ) ) ) ) {
 				throw new RuntimeException( "{$tool} is required for the translations (gettext / WP-CLI)." );
 			}
 		}
 
-		$domain = $this->target->text_domain;
 		$this->reset_tmp();
 
-		$pot = $this->rewrite( (string) file_get_contents( $this->hub . 'languages/' . CodeCopier::SOURCE_DOMAIN . '.pot' ) );
-		$this->merge_into( "languages/{$domain}.pot", $pot, false );
+		try {
+			$this->merge_pot( $this->rewrite( (string) file_get_contents( $this->hub . 'languages/' . CodeCopier::SOURCE_DOMAIN . '.pot' ) ) );
 
-		foreach ( glob( $this->hub . 'languages/' . CodeCopier::SOURCE_DOMAIN . '-*.po' ) ? glob( $this->hub . 'languages/' . CodeCopier::SOURCE_DOMAIN . '-*.po' ) : array() as $po ) {
-			$locale = substr( basename( $po, '.po' ), strlen( CodeCopier::SOURCE_DOMAIN ) + 1 );
-			$this->merge_locale( $locale, $this->rewrite( (string) file_get_contents( $po ) ) );
+			$pos = glob( $this->hub . 'languages/' . CodeCopier::SOURCE_DOMAIN . '-*.po' );
+			foreach ( $pos ? $pos : array() as $po ) {
+				$locale = substr( basename( $po, '.po' ), strlen( CodeCopier::SOURCE_DOMAIN ) + 1 );
+				$this->merge_locale( $locale, $this->rewrite( (string) file_get_contents( $po ) ) );
+			}
+		} finally {
+			$this->run( 'rm -rf ' . escapeshellarg( $this->tmp ) );
 		}
-
-		$this->run( 'rm -rf ' . escapeshellarg( $this->tmp ) );
 	}
 
 	/**
@@ -115,6 +120,42 @@ final class TranslationMerger {
 	}
 
 	/**
+	 * The .pot: the plugin's i18n flow owns it; without one, only the missing
+	 * hub entries are added.
+	 *
+	 * @param string $hub_pot Rewritten hub POT.
+	 * @return void
+	 */
+	private function merge_pot( string $hub_pot ): void {
+		$relative = "languages/{$this->target->text_domain}.pot";
+		$current  = $this->writer->read( $relative );
+		$command  = I18nFlow::command( $this->target->root );
+
+		if ( null !== $command && I18nFlow::excludes_hub( $this->target->root ) ) {
+			$this->writer->note( "the plugin's make-pot excludes assets/hub/; its .pot will lose the hub strings (drop that exclude)" );
+			$command = null;
+		}
+
+		if ( null === $current ) {
+			$this->writer->note( "{$relative} does not exist; skipped" . ( null !== $command ? " (run `{$command}`)" : '' ) );
+			return;
+		}
+
+		$missing = count( PoMerger::missing( $current, $hub_pot ) );
+
+		if ( 0 === $missing ) {
+			return;
+		}
+
+		if ( null !== $command ) {
+			$this->writer->note( "{$relative} lacks {$missing} hub string(s); run `{$command}` in the plugin to refresh it" );
+			return;
+		}
+
+		$this->writer->put( $relative, PoMerger::merge( $current, $hub_pot ) );
+	}
+
+	/**
 	 * One locale: .po, .mo and the JS JSON.
 	 *
 	 * @param string $locale Locale (hu_HU).
@@ -123,57 +164,30 @@ final class TranslationMerger {
 	 * @throws RuntimeException When make-json produced nothing.
 	 */
 	private function merge_locale( string $locale, string $hub_po ): void {
-		$base = "languages/{$this->target->text_domain}-{$locale}";
+		$base    = "languages/{$this->target->text_domain}-{$locale}";
+		$current = $this->writer->read( $base . '.po' );
+		$merged  = null === $current ? $hub_po : PoMerger::merge( $current, $hub_po );
 
-		$this->merge_into( $base . '.po', $hub_po, true );
+		$this->writer->put( $base . '.po', $merged );
 
-		$merged = $this->tmp . 'merged.po';
-		$this->run( 'msgfmt -o ' . escapeshellarg( $this->tmp . 'out.mo' ) . ' ' . escapeshellarg( $merged ) );
+		file_put_contents( $this->tmp . 'merged.po', $merged );
+		$this->run( 'msgfmt -o ' . escapeshellarg( $this->tmp . 'out.mo' ) . ' ' . escapeshellarg( $this->tmp . 'merged.po' ) );
 		$this->writer->put( $base . '.mo', (string) file_get_contents( $this->tmp . 'out.mo' ) );
 
-		// JSON from the hub strings only, named exactly like WordPress expects.
+		// JSON from the merged .po (plugin wording first), hub script strings only.
+		$script   = CodeCopier::ASSETS_DIR . 'index.js';
 		$json_dir = $this->tmp . 'json/';
 		mkdir( $json_dir, 0755, true );
-		file_put_contents( $json_dir . basename( $base ) . '.po', $hub_po );
+		file_put_contents( $json_dir . basename( $base ) . '.po', HubScriptPo::build( $merged, $hub_po, $script ) );
 		$this->run( 'wp i18n make-json ' . escapeshellarg( $json_dir ) . ' --no-purge' );
 
-		$json = $json_dir . basename( $base ) . '-' . md5( CodeCopier::ASSETS_DIR . 'index.js' ) . '.json';
+		$json = $json_dir . basename( $base ) . '-' . md5( $script ) . '.json';
 		if ( ! is_file( $json ) ) {
 			throw new RuntimeException( "wp i18n make-json produced no JSON for {$locale}." );
 		}
 
 		$this->writer->put( 'languages/' . basename( $json ), (string) file_get_contents( $json ) );
 		$this->run( 'rm -rf ' . escapeshellarg( $json_dir ) );
-	}
-
-	/**
-	 * Merge hub entries into a host .po/.pot (host entries win), keeping the
-	 * result in merged.po for the .mo step.
-	 *
-	 * @param string $relative   Host file.
-	 * @param string $hub        Rewritten hub content.
-	 * @param bool   $create_new Create the host file when it does not exist.
-	 * @return void
-	 */
-	private function merge_into( string $relative, string $hub, bool $create_new ): void {
-		$current = $this->writer->read( $relative );
-		$merged  = $this->tmp . 'merged.po';
-
-		if ( null === $current ) {
-			if ( ! $create_new ) {
-				$this->writer->note( "{$relative} does not exist; skipped" );
-				return;
-			}
-			file_put_contents( $merged, $hub );
-		} else {
-			file_put_contents( $this->tmp . 'host.po', $current );
-			file_put_contents( $this->tmp . 'hub.po', $hub );
-			// .pot files come from make-pot (unwrapped), .po files from msgmerge (wrapped).
-			$wrap = str_ends_with( $relative, '.pot' ) ? '--no-wrap ' : '';
-			$this->run( 'msgcat --use-first ' . $wrap . '-o ' . escapeshellarg( $merged ) . ' ' . escapeshellarg( $this->tmp . 'host.po' ) . ' ' . escapeshellarg( $this->tmp . 'hub.po' ) );
-		}
-
-		$this->writer->put( $relative, (string) file_get_contents( $merged ) );
 	}
 
 	/**

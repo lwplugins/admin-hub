@@ -127,6 +127,10 @@ final class Registry {
 
 		$out['name'] = '' === $out['name'] ? $slug : $out['name'];
 
+		if ( ! preg_match( Detector::CONSTANT_PATTERN, $out['constant'] ) ) {
+			$out['constant'] = '';
+		}
+
 		return $out;
 	}
 

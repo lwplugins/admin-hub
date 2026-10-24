@@ -17,6 +17,16 @@ namespace LightweightPlugins\AdminHub;
 final class Detector {
 
 	/**
+	 * Pattern a registry constant name must match.
+	 */
+	public const CONSTANT_PATTERN = '/^LW_[A-Z0-9_]+_VERSION$/';
+
+	/**
+	 * Pattern a constant value must match to be shown as a version.
+	 */
+	private const VERSION_PATTERN = '/^\d+(\.\d+){0,3}$/';
+
+	/**
 	 * Result of get_plugins(): plugin file => header data.
 	 *
 	 * @var array<string, array<string, mixed>>
@@ -104,18 +114,23 @@ final class Detector {
 	}
 
 	/**
-	 * Value of a registry constant when it is defined, else null.
+	 * Value of a registry version constant when it is defined and looks like a
+	 * version number, else null.
 	 *
 	 * @param string $name Constant name.
 	 * @return string|null
 	 */
 	private static function constant_value( string $name ): ?string {
-		if ( ! preg_match( '/^[A-Z][A-Z0-9_]*$/', $name ) || ! defined( $name ) ) {
+		if ( ! preg_match( self::CONSTANT_PATTERN, $name ) || ! defined( $name ) ) {
 			return null;
 		}
 
 		$value = constant( $name );
 
-		return is_scalar( $value ) ? (string) $value : '';
+		if ( ! is_scalar( $value ) || ! preg_match( self::VERSION_PATTERN, (string) $value ) ) {
+			return null;
+		}
+
+		return (string) $value;
 	}
 }

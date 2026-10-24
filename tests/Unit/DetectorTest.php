@@ -78,4 +78,21 @@ final class DetectorTest extends MonkeyTestCase {
 		$this->assertSame( 'missing', $state['status'] );
 		$this->assertSame( 'missing', $this->detector()->detect( 'lw-lms', array() )['status'] );
 	}
+
+	public function test_only_lw_version_constant_names_are_read(): void {
+		define( 'HUB_TEST_OTHER_SETTING', '1.2.3' );
+
+		$state = $this->detector()->detect( 'lw-lms', array( 'constant' => 'HUB_TEST_OTHER_SETTING' ) );
+
+		$this->assertSame( array( 'status' => 'missing', 'version' => null, 'file' => null ), $state );
+	}
+
+	public function test_constant_value_must_look_like_a_version(): void {
+		define( 'LW_HUB_TEST_TEXT_VERSION', 'not a version' );
+
+		$state = $this->detector()->detect( 'lw-lms', array( 'constant' => 'LW_HUB_TEST_TEXT_VERSION' ) );
+
+		$this->assertNull( $state['version'] );
+		$this->assertSame( 'missing', $state['status'] );
+	}
 }

@@ -21,7 +21,7 @@ final class Hub {
 	/**
 	 * Hub version. Bumped in the admin-hub repo only; bin/sync.php copies it.
 	 */
-	public const VERSION = '1.0.0';
+	public const VERSION = '1.0.1';
 
 	/**
 	 * Shared candidate filter.

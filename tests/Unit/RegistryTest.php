@@ -92,6 +92,21 @@ final class RegistryTest extends MonkeyTestCase {
 		$this->assertSame( array( 'lw-seo', 'lw-disable' ), array_keys( Registry::merge( array( 'x' => 1 ), $this->fallback() ) ) );
 	}
 
+	public function test_constant_must_be_an_lw_version_name(): void {
+		$list = Registry::merge(
+			array(
+				'lw-a' => array( 'constant' => 'DB_NAME' ),
+				'lw-b' => array( 'constant' => 'LW_B_VERSION' ),
+				'lw-c' => array( 'constant' => 'LW_C_SETTING' ),
+			),
+			array()
+		);
+
+		$this->assertSame( '', $list['lw-a']['constant'] );
+		$this->assertSame( 'LW_B_VERSION', $list['lw-b']['constant'] );
+		$this->assertSame( '', $list['lw-c']['constant'] );
+	}
+
 	public function test_name_defaults_to_slug(): void {
 		$list = Registry::merge( array( 'lw-x' => array( 'description' => 'd' ) ), array() );
 
